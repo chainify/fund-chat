@@ -1,0 +1,318 @@
+@mixin nl {
+    margin: 0;
+    padding: 0;
+    text-indent: 0;
+    list-style: none;
+    list-style-position: outside;
+}
+
+@mixin cf {
+    &:before,
+    &:after {
+        display: table;
+        content: "";
+    }
+
+    &:after {
+        clear: both;
+    }
+
+    .lt-ie8 & {
+        zoom: 1;
+    }
+}
+
+@mixin blocks-justify {
+    text-align: justify;
+    text-justify: newspaper;
+}
+
+@mixin placeholder {
+    &::-webkit-input-placeholder {
+        @content;
+    }
+
+    &:-moz-placeholder { /* Firefox 18- */
+        @content;
+    }
+
+    &::-moz-placeholder {  /* Firefox 19+ */
+        @content;
+    }
+
+    &:-ms-input-placeholder {
+        @content;
+    }
+}
+
+body, html {
+  height: 100%;
+}
+.page {
+  position: relative;
+  height: 100%;
+  font-family: 'Roboto', sans-serif;
+}
+
+.cdm-chat {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 0;
+  background: #fff;
+  display: none;
+  &--opened {
+    display: block;
+  }
+  &__welcometext {
+    color: #fff;
+    font-size: 30px;
+    font-weight: 300;
+    text-align: center;
+    @media (max-width: 768px) {
+      font-size: 20px;
+      padding: 0 40px;
+    }
+  }
+  &__wrapper {
+    position: relative;
+    height: 100%;
+    background: url(https://www.твоятерритория.онлайн/wp-content/uploads/2016/03/greengrass.png) 50% 0 no-repeat;
+    background-size: cover;
+    &:before {
+      content: "";
+      background: rgba(0,0,0,.3);
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      top: 0;
+      z-index: 0;
+    }
+  }
+  &__container {
+    width: 60%;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 0 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    position: relative;
+    z-index: 100;
+    @media (max-width: 768px) {
+      width: auto;
+    }
+  }
+  &__content {
+    max-width: 100%;
+    @media (max-width: 768px) {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: stretch;
+    }
+  }
+  &__close {
+    font-size: 40px;
+    position: absolute;
+    right: 15px;
+    top: 15px;
+    color: #fff;
+    border: 0;
+    background: transparent;
+    outline: 0;
+    cursor: pointer;
+    opacity: .8;
+    &:hover, &:active, &:focus {
+      opacity: 1;
+    }
+  }
+
+  &__inputform {
+    padding-top: 20px;
+    @media (max-width: 768px) {
+      display: flex;
+      justify-content: space-between;
+      padding-bottom: 20px;
+    }
+  }
+  &__sendbtn {
+    padding: 10px 20px;
+    background-color: #63c669;
+    transition: all .3s ease;
+    color: #fff;
+    border: 0;
+    outline: 0;
+    font-size: 16px;
+    font-weight: 300;
+    text-align: center;
+    text-transform: uppercase;
+    margin-top: 20px;
+    cursor: pointer;
+    &:hover, &:active, &:focus {
+      background-color: lighten(#63c669, 10%)
+    }
+    @media (max-width: 768px) {
+      margin-top: 0;
+      font-size: 0;
+      background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGJhc2VQcm9maWxlPSJmdWxsIiB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIGZpbGw9IiNmZmZmZmYiPjxwYXRoIGQ9Ik0yLjAxIDIxTDIzIDEyIDIuMDEgMyAyIDEwbDE1IDItMTUgMiAuMDEgN3oiLz48L3N2Zz4=);
+      background-position: 50% 50%;
+      background-repeat: no-repeat;
+    }
+  }
+}
+.cdm-chat-messages {
+  @include nl;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  max-height: 200px;
+  overflow-y: auto;
+  &--started {
+    max-height: 400px;
+    padding-top: 100px;
+  }
+  @media (max-width: 768px) {
+    max-height: 100%;
+    flex-grow: 1;
+  }
+}
+
+.cdm-chat-message {
+  margin-top: 20px;
+  &:first-child {
+    margin-top: 0;
+  }
+  &--outgoing {
+    text-align: right;
+    .cdm-chat-message__text {
+      background: #63c669;
+      color: #ffffff;
+      border: 1px solid #63c669;
+      text-align: left;
+    }
+  }
+  &--incoming {
+    text-align: left;
+    .cdm-chat-message__text {
+      background: #ffffff;
+      border: 1px solid #eaedf2;
+    }
+  }
+  &--wait {
+    margin-top: auto;
+    padding-bottom: 20px;
+    padding-top: 30px;
+    color: #FFF;
+    text-align: center;
+  }
+  &--pending {
+    .cdm-chat-message__text {
+      opacity: .5;
+    }
+  }
+  &__text {
+    padding: 10px 15px;
+    display: inline-block;
+    max-width: 45%;
+    border-radius: 5px;
+    overflow: hidden;
+    font-size: 16px;
+    white-space: pre-wrap;
+  }
+  &__time {
+    display: block;
+    text-align: left;
+    margin-top: 10px;
+    color: #ccc;
+    font-size: 12px;
+  }
+}
+
+.cdm-welcome-form{
+  margin: 20px 0;
+  &__row {
+    display: flex;
+    justify-content: stretch;
+    @media (max-width: 768px) {
+      display: block;
+    }
+  }
+  &__input {
+    width: 50%;
+    padding: 0 15px;
+    @media (max-width: 768px) {
+      padding: 0;
+      margin-top: 20px;
+      width: 100%;
+      &:first-child {
+        margin-top: 0;
+      }
+    }
+    &:first-child {
+      padding-left: 0;
+    }
+    &:last-child {
+      padding-right: 0;
+    }
+  }
+  &__question {
+    margin-top: 20px;
+  }
+}
+
+.cdm-input {
+  width: 100%;
+  padding: 20px 20px;
+  height: 35px;
+  line-height: 35px;
+  border: 1px solid #fff;
+  outline: 0;
+  box-sizing: border-box;
+  font-size: 16px;
+  background-color: rgba(255,255,255, .5);
+}
+
+.cdm-textarea {
+  width: 100%;
+  padding: 20px;
+  border: 1px solid #fff;
+  outline: 0;
+  box-sizing: border-box;
+  background-color: rgba(255,255,255, .5);
+  font-size: 16px;
+  height: 120px;
+  resize: none;
+  @media (max-width: 768px) {
+    padding-top: 12px;
+    padding-bottom: 0;
+    height: 45px;
+    margin-right: 10px;
+    flex-grow: 1;
+  }
+}
+
+.cdm-btn {
+    padding: 10px 20px;
+    background: #63c669;
+    transition: all .3s ease;
+    color: #fff;
+    border: 0;
+    outline: 0;
+    font-size: 16px;
+    font-weight: 300;
+    text-align: center;
+    text-transform: uppercase;
+    margin-top: 20px;
+    cursor: pointer;
+    &:hover, &:active, &:focus {
+      background-color: lighten(#63c669, 10%)
+    }
+    @media (max-width: 768px) {
+      margin-top: 20px;
+      width: 100%;
+    }
+  }
