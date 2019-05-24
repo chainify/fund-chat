@@ -30,6 +30,7 @@
     "sass-loader": "^6.0.6"
   },
   "dependencies": {
+    "@waves/signature-generator": "^5.2.1",
     "axios": "^0.18.0",
     "crypto-js": "^3.1.9-1",
     "js-sha256": "^0.9.0",

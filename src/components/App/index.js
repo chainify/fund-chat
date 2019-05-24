@@ -2,6 +2,7 @@ import { h, render, Component } from "preact";
 import {address, keyPair, publicKey, base58encode, signBytes, getSharedKey, encryptMessage, decryptMessage, buildAddress, base58decode} from "../waves-crypto";
 import sha256 from 'js-sha256';
 import axios from 'axios';
+import { Seed } from '@waves/signature-generator'
 import MessageList from "../MessageList";
 import "./style.scss";
 
@@ -18,18 +19,31 @@ export default class App extends Component {
     this.state.age = "";
     this.state.question = "";
     // this.state.seed = "canvas okay bus gorilla chest debate upgrade marriage raw arrange member tobacco";
-    this.state.seed = "canvas okay bus gorilla chest debate upgrade marriage raw arrange member tobaccosdfsassddddddsa";
+    this.state.seed = this.getSeed();
     this.messagesList = {}
   }
   
   componentDidMount() {
+    this.getSeed();
     this.getMessages();
+    console.log(this.state.seed);
     window.changeChatState = () => {
        this.setState({isChatOpened: !this.state.isChatOpened});
        if (this.state.isChatOpened) {
         setTimeout(this.scrollToBottom,100);
        }
     };
+  }
+
+  getSeed() {
+    const sessionSeed = sessionStorage.getItem('seed');
+    if (!sessionSeed) {
+      const newSeed = Seed.create().phrase;
+      sessionStorage.setItem('seed', newSeed);
+      return newSeed;
+    } else {
+      return sessionSeed;
+    }
   }
   
   changePopupState = () => {
@@ -81,7 +95,7 @@ export default class App extends Component {
         const cdms = res.data.cdms;
         const cdmstxIds = cdms.map(cdm => cdm.txId);
         const decryptedMessages = cdms.map((cdm) => {
-          return {message: this.decryptMessage(cdm.message), timestamp: cdm.timestamp, type: cdm.type}
+          return {message: this.decryptMessage(cdm.message), timestamp: cdm.timestamp, type: cdm.type, recipient: cdm.recipient}
         })
         const nonDeliveredMessages = this.state.pendingMessages.filter(message => !cdmstxIds.includes(message.txId));
         if (nonDeliveredMessages.length === 0) {
@@ -111,6 +125,11 @@ export default class App extends Component {
       let encryptedMessage = '';
       encryptedMessage += '-----BEGIN_BLOCKCHAIN WAVES-----';
       encryptedMessage += `\r\n-----BEGIN_PK ${recipientPublicKey}-----\r\n${cypherText}\r\n-----END_PK ${recipientPublicKey}-----`;
+      if (this.state.messages.length > 1) {
+        const operatorPubKey = this.state.messages[1].recipient;
+        const cypherTextForOperator = encryptMessage(base58encode(getSharedKey(alice.private, operatorPubKey)), message, 'chainify');
+        encryptedMessage += `\r\n-----BEGIN_PK ${operatorPubKey}-----\r\n${cypherTextForOperator}\r\n-----END_PK ${operatorPubKey}-----`;
+      }
       encryptedMessage += `\r\n-----BEGIN_SHA256-----\r\n${sha}\r\n-----END_SHA256-----`;
       encryptedMessage += `\r\n-----BEGIN_SIGNATURE ${alice.public}-----\r\n${signature}\r\n-----END_SIGNATURE ${alice.public}-----`;
       encryptedMessage += '\r\n-----END_BLOCKCHAIN WAVES-----';
