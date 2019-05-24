@@ -19,7 +19,7 @@ export default class MessageList extends Component {
   
   render(props, state) {
     const wasStarted = (props.messages.length === 0 && props.pendingMessages.length === 0);
-    const hasNoAnswer = (props.messages.length ===1 || props.pendingMessages === 1);
+    const hasNoAnswer = (props.messages.length === 1 || (props.messages.length === 0 && props.pendingMessages.length === 1));
     const chatClass = wasStarted ? 'cdm-chat-messages' : 'cdm-chat-messages cdm-chat-messages--started';
     return (
       <ul class={chatClass} id="cdm-chat-messages" ref={ c => this.props.setMessagesListRef(c) }>

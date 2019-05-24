@@ -26,7 +26,6 @@ export default class App extends Component {
   componentDidMount() {
     this.getSeed();
     this.getMessages();
-    console.log(this.state.seed);
     window.changeChatState = () => {
        this.setState({isChatOpened: !this.state.isChatOpened});
        if (this.state.isChatOpened) {
@@ -188,7 +187,7 @@ export default class App extends Component {
   }
 
   renderSendMessageForm() {
-    const hasNoAnswer = (this.state.messages.length ===1 || this.state.pendingMessages === 1);
+    const hasNoAnswer = (this.state.messages.length === 1 || (this.state.messages.length === 0 && this.state.pendingMessages.length === 1));
     if (this.state.messages.length === 0 && this.state.pendingMessages.length === 0 || hasNoAnswer) {
       return false
     } else {

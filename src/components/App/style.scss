@@ -204,10 +204,12 @@ body, html {
   }
   &--wait {
     margin-top: auto;
+    margin-top: 20px;
     padding-bottom: 20px;
-    padding-top: 30px;
+    padding-top: 20px;
     color: #FFF;
     text-align: center;
+    border-top: 1px solid #eaedf2;
   }
   &--pending {
     .cdm-chat-message__text {
