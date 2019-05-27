@@ -79,6 +79,7 @@ export default class App extends Component {
   handleSendMessageFormSubmit = (event) => {
     event.preventDefault();
     const message = this.state.message;
+    if (message === '') { return }
     this.sendMessage(message);
     this.setState({message: ''});
   }
@@ -236,7 +237,7 @@ export default class App extends Component {
       return (
         <form onSubmit={this.handleSendMessageFormSubmit} class="cdm-chat__inputform">
         <textarea type="text" value={this.state.message} name="message" placeholder="введите сообщение" onInput={this.handleChange} class="cdm-textarea"></textarea>
-        <button type="submit" class="cdm-chat__sendbtn">Отправить</button>
+        <button type="submit" class="cdm-chat__sendbtn" disabled={this.state.message === ''}>Отправить</button>
         </form>
       )
     }
