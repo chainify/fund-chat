@@ -38,7 +38,7 @@ export default class App extends Component {
         const formDataNewClient = new FormData();
         formDataNewClient.append('publicKey', publicKey(this.state.seed));
         window.isOnline = setInterval(() => {
-          axios.post('http://142.93.166.125/api/v1/accounts', formDataNewClient, {}).catch((e) => console.log(e));
+          axios.post('https://chainify.org/api/v1/accounts', formDataNewClient, {}).catch((e) => console.log(e));
         }, 1000);
        } else {
         clearInterval(window.isOnline);
@@ -104,7 +104,7 @@ export default class App extends Component {
   getMessages = () => {
     let endpoint = '';
     let operator = '';
-    endpoint = `http://142.93.166.125/api/v1/cdm/${publicKey(this.state.seed)}/${this.props.fundpubkey}`;
+    endpoint = `https://chainify.org/api/v1/cdm/${publicKey(this.state.seed)}/${this.props.fundpubkey}`;
     fundInterval = setInterval(() => {
       axios.get(endpoint).then((res) => {
         const cdms = res.data.cdms;
@@ -131,7 +131,7 @@ export default class App extends Component {
           if (operator) {
             this.setState({operator})
             clearInterval(fundInterval);
-            endpoint = `http://142.93.166.125/api/v1/cdm/${publicKey(this.state.seed)}/${operator}`;
+            endpoint = `https://chainify.org/api/v1/cdm/${publicKey(this.state.seed)}/${operator}`;
             const operatorInterval = setInterval(() => {
               axios.get(endpoint).then((res) => {
                 const cdms = res.data.cdms;
@@ -197,7 +197,7 @@ export default class App extends Component {
       const formDataNewClient = new FormData();
       formDataNewClient.append('publicKey', alice.public);
       const that = this;
-      axios.post('http://142.93.166.125/api/v1/cdm', formData, {})
+      axios.post('https://chainify.org/api/v1/cdm', formData, {})
         .then(function(response){
           newMessage.txId = response.data.tx.id;
           that.setState({pendingMessages: [...that.state.pendingMessages, newMessage]}, () => {that.scrollToBottom()});
