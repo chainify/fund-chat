@@ -214,7 +214,7 @@ export default class App extends Component {
         <form action="" class="cdm-welcome-form" onSubmit={this.handleWelcomeFormSubmit}>
           <div class="cdm-welcome-form__row">
             <div className="cdm-welcome-form__input">
-              <input type="text" name="name" placeholder="имя" onInput={this.handleChange} class="cdm-input"/>
+              <input type="text" name="name" placeholder="имя или ник" onInput={this.handleChange} class="cdm-input"/>
             </div>
             <div className="cdm-welcome-form__input">
               <input type="text" name="age" placeholder="возраст" onInput={this.handleChange} class="cdm-input"/>
@@ -236,7 +236,7 @@ export default class App extends Component {
     } else {
       return (
         <form onSubmit={this.handleSendMessageFormSubmit} class="cdm-chat__inputform">
-        <textarea type="text" value={this.state.message} name="message" placeholder="введите сообщение" onInput={this.handleChange} class="cdm-textarea"></textarea>
+        <textarea type="text" value={this.state.message} name="message" placeholder="твой вопрос" onInput={this.handleChange} class="cdm-textarea"></textarea>
         <button type="submit" class="cdm-chat__sendbtn" disabled={this.state.message === ''}>Отправить</button>
         </form>
       )
@@ -252,9 +252,9 @@ export default class App extends Component {
 	    <div class="cdm-chat__wrapper">
 	    <div class="cdm-chat__container">
 	      <div class="cdm-chat__content">
-          { chatStarted && (<div class="cdm-chat__welcome"><h3 class="cdm-chat__welcometext">
+          {/*{ chatStarted && (<div class="cdm-chat__welcome"><h3 class="cdm-chat__welcometext">
             Здравствуйте! <br/> Задайте свой вопрос консультанту
-          </h3> </div>)}
+          </h3> </div>)}*/}
           {this.renderWelcomeForm()}
 	        <MessageList messages={this.state.messages} pendingMessages={this.state.pendingMessages} wasForwarded={this.state.operator!==''} setMessagesListRef={this.setMessagesListRef}/>
 	        {!this.state.sessionFinished && this.renderSendMessageForm()}
