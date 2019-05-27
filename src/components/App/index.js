@@ -18,9 +18,10 @@ export default class App extends Component {
     this.state.name = "";
     this.state.age = "";
     this.state.question = "";
+    this.state.operator = "";
     // this.state.seed = "canvas okay bus gorilla chest debate upgrade marriage raw arrange member tobacco";
     this.state.seed = this.getSeed();
-    this.messagesList = {}
+    this.state.messagesList = {}
   }
   
   componentDidMount() {
@@ -30,6 +31,13 @@ export default class App extends Component {
        this.setState({isChatOpened: !this.state.isChatOpened});
        if (this.state.isChatOpened) {
         setTimeout(this.scrollToBottom,100);
+        const formDataNewClient = new FormData();
+        formDataNewClient.append('publicKey', publicKey(this.state.seed));
+        window.isOnline = setInterval(() => {
+          axios.post('http://142.93.166.125/api/v1/accounts', formDataNewClient, {}).catch((e) => console.log(e));
+        }, 1000);
+       } else {
+        clearInterval(window.isOnline);
        }
     };
   }
@@ -68,14 +76,15 @@ export default class App extends Component {
     event.preventDefault();
     const message = this.state.message;
     this.sendMessage(message);
+    this.setState({message: ''});
   }
 
-  decryptMessage(message) {
-    const recipientPublicKey = this.props.fundpubkey;
+  decryptMessage(message,recipientPublicKey) {
     const seed = this.state.seed;
     const alice = keyPair(seed);
     const sharedKey = base58encode(getSharedKey(alice.private, recipientPublicKey));
-    return decryptMessage(sharedKey, message, 'chainify');
+    const decryptedMessage = decryptMessage(sharedKey, message, 'chainify');
+    return decryptedMessage;
   }
 
   scrollToBottom = () => {
@@ -89,24 +98,36 @@ export default class App extends Component {
 
   getMessages = (initial = false) => {
     const address = `http://142.93.166.125/api/v1/cdm/${publicKey(this.state.seed)}/${this.props.fundpubkey}`;
-    setInterval(() => {
-      axios.get(address).then((res) => {
-        const cdms = res.data.cdms;
-        const cdmstxIds = cdms.map(cdm => cdm.txId);
-        const decryptedMessages = cdms.map((cdm) => {
-          return {message: this.decryptMessage(cdm.message), timestamp: cdm.timestamp, type: cdm.type, recipient: cdm.recipient}
-        })
-        const nonDeliveredMessages = this.state.pendingMessages.filter(message => !cdmstxIds.includes(message.txId));
-        if (nonDeliveredMessages.length === 0) {
-          this.setState({pendingMessages: []});
-        }
-        const hasToScroll = this.state.messages.length !== decryptedMessages.length;
-        this.setState({messages: decryptedMessages});
-        if (hasToScroll) {
-          this.scrollToBottom();
-        }
-      }).catch((e) => console.log(e))
-    }, 1000);
+    axios.get(address).then((res) =>{
+      this.setState({operator: res.data.cdms[0].forwardedTo[0]}, () => {
+        const initialMessage = res.data.cdms[0];
+        const newEndpoint =  `http://142.93.166.125/api/v1/cdm/${publicKey(this.state.seed)}/${this.state.operator}`;
+        setInterval(() => {
+          axios.get(newEndpoint).then((res) => {
+            const cdms = res.data.cdms;
+            const cdmstxIds = cdms.map(cdm => cdm.txId);
+            const decryptedMessages = cdms.map((cdm) => {
+              return {message: this.decryptMessage(cdm.message, this.state.operator), timestamp: cdm.timestamp, type: cdm.type, recipient: cdm.recipient}
+            });
+            const nonDeliveredMessages = this.state.pendingMessages.filter(message => !cdmstxIds.includes(message.txId));
+            if (nonDeliveredMessages.length === 0) {
+              this.setState({pendingMessages: []});
+            }
+            const hasToScroll = this.state.messages.length !== decryptedMessages.length;
+            this.setState({messages: [
+                {
+                  message: this.decryptMessage(initialMessage.message, this.props.fundpubkey), 
+                  timestamp: initialMessage.timestamp, type: initialMessage.type, 
+                  recipient: initialMessage.recipient
+                }
+              ].concat(decryptedMessages)});
+            if (hasToScroll) {
+              this.scrollToBottom();
+            }
+          }).catch((e) => console.log(e))
+        }, 1000);
+      });
+    });
   }
   
   sendMessage(message, initial = '') {
@@ -125,7 +146,7 @@ export default class App extends Component {
       encryptedMessage += '-----BEGIN_BLOCKCHAIN WAVES-----';
       encryptedMessage += `\r\n-----BEGIN_PK ${recipientPublicKey}-----\r\n${cypherText}\r\n-----END_PK ${recipientPublicKey}-----`;
       if (this.state.messages.length > 1) {
-        const operatorPubKey = this.state.messages[1].recipient;
+        const operatorPubKey = this.state.operator;
         const cypherTextForOperator = encryptMessage(base58encode(getSharedKey(alice.private, operatorPubKey)), message, 'chainify');
         encryptedMessage += `\r\n-----BEGIN_PK ${operatorPubKey}-----\r\n${cypherTextForOperator}\r\n-----END_PK ${operatorPubKey}-----`;
       }
@@ -144,20 +165,10 @@ export default class App extends Component {
       const formDataNewClient = new FormData();
       formDataNewClient.append('publicKey', alice.public);
       const that = this;
-      // setInterval(() => {
-      //   axios.post('http://142.93.166.125/api/v1/accounts', formDataNewClient, {}).catch((e) => console.log(e));
-      // }, 1000);
       axios.post('http://142.93.166.125/api/v1/cdm', formData, {})
         .then(function(response){
           newMessage.txId = response.data.tx.id;
-          that.setState({pendingMessages: [...that.state.pendingMessages, newMessage]}, () => that.scrollToBottom());
-          if (initial === 'initial') {
-            setInterval(() => {
-              axios.post('http://142.93.166.125/api/v1/accounts', formDataNewClient, {}).catch((e) => console.log(e));
-            }, 1000);
-          } else {
-            return true
-          }
+          that.setState({pendingMessages: [...that.state.pendingMessages, newMessage]}, () => {that.scrollToBottom()});
         })
         .catch(function (error) {
           console.log(error);
@@ -193,7 +204,7 @@ export default class App extends Component {
     } else {
       return (
         <form onSubmit={this.handleSendMessageFormSubmit} class="cdm-chat__inputform">
-        <textarea type="text" name="message" placeholder="введите сообщение" onInput={this.handleChange} class="cdm-textarea"></textarea>
+        <textarea type="text" value={this.state.message} name="message" placeholder="введите сообщение" onInput={this.handleChange} class="cdm-textarea"></textarea>
         <button type="submit" class="cdm-chat__sendbtn">Отправить</button>
         </form>
       )
@@ -213,7 +224,7 @@ export default class App extends Component {
             Здравствуйте! <br/> Задайте свой вопрос консультанту
           </h3> </div>)}
           {this.renderWelcomeForm()}
-	        <MessageList messages={this.state.messages} pendingMessages={this.state.pendingMessages} setMessagesListRef={this.setMessagesListRef}/>
+	        <MessageList messages={this.state.messages} pendingMessages={this.state.pendingMessages} wasForwarded={this.state.operator!==''} setMessagesListRef={this.setMessagesListRef}/>
 	        {this.renderSendMessageForm()}
 	     </div>
 	    </div>

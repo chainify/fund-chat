@@ -20,12 +20,14 @@ export default class MessageList extends Component {
   render(props, state) {
     const wasStarted = (props.messages.length === 0 && props.pendingMessages.length === 0);
     const hasNoAnswer = (props.messages.length === 1 || (props.messages.length === 0 && props.pendingMessages.length === 1));
+    const wasForwarded = props.wasForwarded;
     const chatClass = wasStarted ? 'cdm-chat-messages' : 'cdm-chat-messages cdm-chat-messages--started';
     return (
       <ul class={chatClass} id="cdm-chat-messages" ref={ c => this.props.setMessagesListRef(c) }>
         {props.messages.map((message)=>this.renderMessage(message))}
         {props.pendingMessages.map((message)=>this.renderMessage(message, true))}
-        {hasNoAnswer && (<li class="cdm-chat-message cdm-chat-message--wait">Дождитесь ответа консультанта</li>)}
+        {hasNoAnswer && !wasForwarded && (<li class="cdm-chat-message cdm-chat-message--wait">Дождитесь ответа консультанта</li>)}
+        {wasForwarded && hasNoAnswer && (<li class="cdm-chat-message cdm-chat-message--wait">Ваше сообщение передано консультанту. Он ответит в течение 3-х минут.</li>)}
       </ul>
     )
   }
