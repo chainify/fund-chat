@@ -6,11 +6,14 @@ import { Seed } from '@waves/signature-generator'
 import MessageList from "../MessageList";
 import "./style.scss";
 
+let fundInterval;
+
 export default class App extends Component {
 
   constructor() {
     super();
     this.state.messages = [];
+    this.state.initialMessage = {};
     this.state.pendingMessages = [];
     this.state.isChatOpened = false;
     this.state.message = "";
@@ -19,6 +22,7 @@ export default class App extends Component {
     this.state.age = "";
     this.state.question = "";
     this.state.operator = "";
+    this.state.sessionFinished = false;
     // this.state.seed = "canvas okay bus gorilla chest debate upgrade marriage raw arrange member tobacco";
     this.state.seed = this.getSeed();
     this.state.messagesList = {}
@@ -96,38 +100,65 @@ export default class App extends Component {
     this.state.messagesList = component;
   }
 
-  getMessages = (initial = false) => {
-    const address = `http://142.93.166.125/api/v1/cdm/${publicKey(this.state.seed)}/${this.props.fundpubkey}`;
-    axios.get(address).then((res) =>{
-      this.setState({operator: res.data.cdms[0].forwardedTo[0]}, () => {
-        const initialMessage = res.data.cdms[0];
-        const newEndpoint =  `http://142.93.166.125/api/v1/cdm/${publicKey(this.state.seed)}/${this.state.operator}`;
-        setInterval(() => {
-          axios.get(newEndpoint).then((res) => {
-            const cdms = res.data.cdms;
-            const cdmstxIds = cdms.map(cdm => cdm.txId);
-            const decryptedMessages = cdms.map((cdm) => {
-              return {message: this.decryptMessage(cdm.message, this.state.operator), timestamp: cdm.timestamp, type: cdm.type, recipient: cdm.recipient}
-            });
-            const nonDeliveredMessages = this.state.pendingMessages.filter(message => !cdmstxIds.includes(message.txId));
-            if (nonDeliveredMessages.length === 0) {
-              this.setState({pendingMessages: []});
-            }
-            const hasToScroll = this.state.messages.length !== decryptedMessages.length;
-            this.setState({messages: [
-                {
-                  message: this.decryptMessage(initialMessage.message, this.props.fundpubkey), 
-                  timestamp: initialMessage.timestamp, type: initialMessage.type, 
-                  recipient: initialMessage.recipient
+  getMessages = () => {
+    let endpoint = '';
+    let operator = '';
+    endpoint = `http://142.93.166.125/api/v1/cdm/${publicKey(this.state.seed)}/${this.props.fundpubkey}`;
+    fundInterval = setInterval(() => {
+      axios.get(endpoint).then((res) => {
+        const cdms = res.data.cdms;
+        if (cdms.length > 0) {
+          const cdmstxIds = cdms.map(cdm => cdm.txId);
+          const decryptedMessages = cdms.map((cdm) => {
+            return {message: this.decryptMessage(cdm.message, this.props.fundpubkey), timestamp: cdm.timestamp, type: cdm.type, recipient: cdm.recipient}
+          });
+          const nonDeliveredMessages = this.state.pendingMessages.filter(message => !cdmstxIds.includes(message.txId));
+          if (nonDeliveredMessages.length === 0) {
+            this.setState({pendingMessages: []});
+          }
+          const hasToScroll = this.state.messages.length !== decryptedMessages.length;
+          operator = cdms[0].forwardedTo[0];
+          const initialMessage = {
+            message: decryptedMessages[0],
+            timestamp: cdms[0].timestamp,
+            type: cdms[0].type,
+          }
+          this.setState({initialMessage: initialMessage, messages: decryptedMessages});
+          if (hasToScroll) {
+            this.scrollToBottom();
+          }
+          if (operator) {
+            this.setState({operator})
+            clearInterval(fundInterval);
+            endpoint = `http://142.93.166.125/api/v1/cdm/${publicKey(this.state.seed)}/${operator}`;
+            const operatorInterval = setInterval(() => {
+              axios.get(endpoint).then((res) => {
+                const cdms = res.data.cdms;
+                if (cdms[cdms.length-1].hash === '7f642be8c8c3b67d3a1119fb9ab69e8c5505347140f2e78b5833f96997fd8424') {
+                  clearInterval(operatorInterval);
+                  this.setState({sessionFinished: true});
                 }
-              ].concat(decryptedMessages)});
-            if (hasToScroll) {
-              this.scrollToBottom();
-            }
-          }).catch((e) => console.log(e))
-        }, 1000);
-      });
-    });
+                const cdmstxIds = cdms.map(cdm => cdm.txId);
+                const decryptedMessages = cdms.map((cdm) => {
+                  return {message: this.decryptMessage(cdm.message, operator), timestamp: cdm.timestamp, type: cdm.type}
+                });
+                const nonDeliveredMessages = this.state.pendingMessages.filter(message => !cdmstxIds.includes(message.txId));
+                if (nonDeliveredMessages.length === 0) {
+                  this.setState({pendingMessages: []});
+                }
+                const hasToScroll = this.state.messages.length !== decryptedMessages.length;
+                
+                this.setState({messages: [initialMessage.message, ...decryptedMessages]});
+            
+                if (hasToScroll) {
+                  this.scrollToBottom();
+                }
+              }).catch((e) => console.log(e))
+            }, 1000);
+          }
+        }
+      }).catch((e) => console.log(e))
+    }, 1000);
   }
   
   sendMessage(message, initial = '') {
@@ -225,7 +256,7 @@ export default class App extends Component {
           </h3> </div>)}
           {this.renderWelcomeForm()}
 	        <MessageList messages={this.state.messages} pendingMessages={this.state.pendingMessages} wasForwarded={this.state.operator!==''} setMessagesListRef={this.setMessagesListRef}/>
-	        {this.renderSendMessageForm()}
+	        {!this.state.sessionFinished && this.renderSendMessageForm()}
 	     </div>
 	    </div>
 	    <button href="#" class="cdm-chat__close" onClick={this.changePopupState}>x</button>
