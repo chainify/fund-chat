@@ -114,7 +114,6 @@ export default class App extends Component {
       
       if (this.state.wasInitialSent && this.state.isChatOpened) {
         axios.get(endpoint).then((res) => {
-
           const cdms = res.data.cdms;
           if (cdms.length > 0) {
             const cdmstxIds = cdms.map(cdm => cdm.txId);
@@ -144,7 +143,7 @@ export default class App extends Component {
                 if (this.state.wasInitialSent && this.state.isChatOpened) {
                     axios.get(endpoint).then((res) => {
                       const cdms = res.data.cdms;
-                      if (cdms[cdms.length-1].hash === '7f642be8c8c3b67d3a1119fb9ab69e8c5505347140f2e78b5833f96997fd8424') {
+                      if (cdms.length > 0 && cdms[cdms.length-1].hash === '7f642be8c8c3b67d3a1119fb9ab69e8c5505347140f2e78b5833f96997fd8424') {
                         clearInterval(operatorInterval);
                         this.setState({sessionFinished: true});
                       }
@@ -204,6 +203,7 @@ export default class App extends Component {
       }
       const formData = new FormData();
       formData.append('message', encryptedMessage);
+      console.log(recipientPublicKey);
       formData.append('recipient', recipientPublicKey);
       const formDataNewClient = new FormData();
       formDataNewClient.append('publicKey', alice.public);
