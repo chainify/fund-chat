@@ -26,11 +26,15 @@ export default class App extends Component {
     // this.state.seed = "canvas okay bus gorilla chest debate upgrade marriage raw arrange member tobacco";
     this.state.seed = this.getSeed();
     this.state.messagesList = {}
+    this.state.wasInitialSent = false;
   }
   
   componentDidMount() {
     this.getSeed();
     this.getMessages();
+    if (sessionStorage.getItem('wasInitialSent')) {
+      this.setState({wasInitialSent: true});
+    }
     window.changeChatState = () => {
        this.setState({isChatOpened: !this.state.isChatOpened});
        if (this.state.isChatOpened) {
@@ -105,60 +109,67 @@ export default class App extends Component {
     let endpoint = '';
     let operator = '';
     endpoint = `https://chainify.org/api/v1/cdm/${publicKey(this.state.seed)}/${this.props.fundpubkey}`;
+    console.log(endpoint);
     fundInterval = setInterval(() => {
-      axios.get(endpoint).then((res) => {
-        const cdms = res.data.cdms;
-        if (cdms.length > 0) {
-          const cdmstxIds = cdms.map(cdm => cdm.txId);
-          const decryptedMessages = cdms.map((cdm) => {
-            return {message: this.decryptMessage(cdm.message, this.props.fundpubkey), timestamp: cdm.timestamp, type: cdm.type, recipient: cdm.recipient}
-          });
-          const nonDeliveredMessages = this.state.pendingMessages.filter(message => !cdmstxIds.includes(message.txId));
-          if (nonDeliveredMessages.length === 0) {
-            this.setState({pendingMessages: []});
-          }
-          const hasToScroll = this.state.messages.length !== decryptedMessages.length;
-          operator = cdms[0].forwardedTo[0];
-          const initialMessage = {
-            message: decryptedMessages[0],
-            timestamp: cdms[0].timestamp,
-            type: cdms[0].type,
-          }
-          this.setState({initialMessage: initialMessage, messages: decryptedMessages});
-          if (hasToScroll) {
-            this.scrollToBottom();
-          }
-          if (operator) {
-            this.setState({operator})
-            clearInterval(fundInterval);
-            endpoint = `https://chainify.org/api/v1/cdm/${publicKey(this.state.seed)}/${operator}`;
-            const operatorInterval = setInterval(() => {
-              axios.get(endpoint).then((res) => {
-                const cdms = res.data.cdms;
-                if (cdms[cdms.length-1].hash === '7f642be8c8c3b67d3a1119fb9ab69e8c5505347140f2e78b5833f96997fd8424') {
-                  clearInterval(operatorInterval);
-                  this.setState({sessionFinished: true});
-                }
-                const cdmstxIds = cdms.map(cdm => cdm.txId);
-                const decryptedMessages = cdms.map((cdm) => {
-                  return {message: this.decryptMessage(cdm.message, operator), timestamp: cdm.timestamp, type: cdm.type}
-                });
-                const nonDeliveredMessages = this.state.pendingMessages.filter(message => !cdmstxIds.includes(message.txId));
-                if (nonDeliveredMessages.length === 0) {
-                  this.setState({pendingMessages: []});
-                }
-                const hasToScroll = this.state.messages.length !== decryptedMessages.length;
-                
-                this.setState({messages: [initialMessage.message, ...decryptedMessages]});
-            
-                if (hasToScroll) {
-                  this.scrollToBottom();
-                }
-              }).catch((e) => console.log(e))
-            }, 1000);
-          }
-        }
-      }).catch((e) => console.log(e))
+      
+      if (this.state.wasInitialSent && this.state.isChatOpened) {
+        axios.get(endpoint).then((res) => {
+
+          const cdms = res.data.cdms;
+          if (cdms.length > 0) {
+            const cdmstxIds = cdms.map(cdm => cdm.txId);
+            const decryptedMessages = cdms.map((cdm) => {
+              return {message: this.decryptMessage(cdm.message, this.props.fundpubkey), timestamp: cdm.timestamp, type: cdm.type, recipient: cdm.recipient}
+            });
+            const nonDeliveredMessages = this.state.pendingMessages.filter(message => !cdmstxIds.includes(message.txId));
+            if (nonDeliveredMessages.length === 0) {
+              this.setState({pendingMessages: []});
+            }
+            const hasToScroll = this.state.messages.length !== decryptedMessages.length;
+            operator = cdms[0].forwardedTo[0];
+            const initialMessage = {
+              message: decryptedMessages[0],
+              timestamp: cdms[0].timestamp,
+              type: cdms[0].type,
+            }
+            this.setState({initialMessage: initialMessage, messages: decryptedMessages});
+            if (hasToScroll) {
+              this.scrollToBottom();
+            }
+            if (operator) {
+              this.setState({operator})
+              clearInterval(fundInterval);
+              endpoint = `https://chainify.org/api/v1/cdm/${publicKey(this.state.seed)}/${operator}`;
+              const operatorInterval = setInterval(() => {
+                if (this.state.wasInitialSent && this.state.isChatOpened) {
+                    axios.get(endpoint).then((res) => {
+                      const cdms = res.data.cdms;
+                      if (cdms[cdms.length-1].hash === '7f642be8c8c3b67d3a1119fb9ab69e8c5505347140f2e78b5833f96997fd8424') {
+                        clearInterval(operatorInterval);
+                        this.setState({sessionFinished: true});
+                      }
+                      const cdmstxIds = cdms.map(cdm => cdm.txId);
+                      const decryptedMessages = cdms.map((cdm) => {
+                        return {message: this.decryptMessage(cdm.message, operator), timestamp: cdm.timestamp, type: cdm.type}
+                      });
+                      const nonDeliveredMessages = this.state.pendingMessages.filter(message => !cdmstxIds.includes(message.txId));
+                      if (nonDeliveredMessages.length === 0) {
+                        this.setState({pendingMessages: []});
+                      }
+                      const hasToScroll = this.state.messages.length !== decryptedMessages.length;
+                      
+                      this.setState({messages: [initialMessage.message, ...decryptedMessages]});
+                  
+                      if (hasToScroll) {
+                        this.scrollToBottom();
+                      }
+                    }).catch((e) => console.log(e))
+                  }
+                }, 1000);
+              }
+            }
+        }).catch((e) => console.log(e))
+      }
     }, 1000);
   }
   
@@ -193,7 +204,7 @@ export default class App extends Component {
       }
       const formData = new FormData();
       formData.append('message', encryptedMessage);
-      formData.append('recipient', fundAddress);
+      formData.append('recipient', recipientPublicKey);
       const formDataNewClient = new FormData();
       formDataNewClient.append('publicKey', alice.public);
       const that = this;
@@ -201,6 +212,10 @@ export default class App extends Component {
         .then(function(response){
           newMessage.txId = response.data.tx.id;
           that.setState({pendingMessages: [...that.state.pendingMessages, newMessage]}, () => {that.scrollToBottom()});
+          if (initial === 'initial') {
+            that.setState({wasInitialSent: true});
+            sessionStorage.setItem('wasInitialSent', 'true');
+          }
         })
         .catch(function (error) {
           console.log(error);

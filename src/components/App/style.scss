@@ -45,15 +45,19 @@
     }
 }
 
-body, html {
-  height: 100%;
-}
-.page {
-  position: relative;
-  height: 100%;
-  font-family: 'Roboto', sans-serif;
-}
+// html {
+//   height: 100%;
+// }
+// .page {
+//   position: relative;
+//   height: 100%;
+//   font-family: 'Roboto', sans-serif;
+// }
 
+#cdm-chat-open {
+  position: relative;
+  z-index: 1000;
+}
 .cdm-chat {
   position: fixed;
   left: 0;
@@ -62,6 +66,7 @@ body, html {
   top: 0;
   background: #fff;
   display: none;
+  z-index: 10000;
   &--opened {
     display: block;
   }
@@ -134,6 +139,9 @@ body, html {
 
   &__inputform {
     padding-top: 20px;
+    .minimal-form-input {
+      display: none!important;
+    }
     @media (max-width: 768px) {
       display: flex;
       justify-content: space-between;
@@ -237,6 +245,9 @@ body, html {
 
 .cdm-welcome-form{
   margin: 20px 0;
+  .minimal-form-input {
+    display: none!important;
+  }
   &__row {
     display: flex;
     justify-content: stretch;
@@ -267,9 +278,9 @@ body, html {
   }
 }
 
-.cdm-input {
+.cdm-input.cdm-input {
   width: 100%;
-  padding: 20px 20px;
+  padding: 20px 20px!important;
   height: 35px;
   line-height: 35px;
   border: 1px solid #fff;
@@ -277,9 +288,19 @@ body, html {
   box-sizing: border-box;
   font-size: 16px;
   background-color: rgba(255,255,255, .5);
+  &:focus {
+    background-color: rgba(255,255,255, .5);
+    border: 1px solid #fff;
+    @include placeholder {
+      color: #767a77;
+    }
+  }
+  @include placeholder {
+    color: #767a77;
+  }
 }
 
-.cdm-textarea {
+.cdm-textarea.cdm-textarea {
   width: 100%;
   padding: 20px;
   border: 1px solid #fff;
@@ -287,14 +308,28 @@ body, html {
   box-sizing: border-box;
   background-color: rgba(255,255,255, .5);
   font-size: 16px;
-  height: 120px;
+  height: 120px!important;
   resize: none;
+  @include placeholder {
+    color: #767a77;
+  }
   @media (max-width: 768px) {
     padding-top: 12px;
     padding-bottom: 0;
-    height: 45px;
+    height: 45px!important;
     margin-right: 10px;
     flex-grow: 1;
+  }
+  &:focus, &:active {
+    background-color: rgba(255,255,255, .5);
+    border: 1px solid #fff;
+    height: 120px!important;
+    @media (max-width: 768px) {
+      height: 45px!important;
+    }
+    @include placeholder {
+      color: #767a77;
+    }
   }
 }
 
