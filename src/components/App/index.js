@@ -7,7 +7,7 @@ import MessageList from "../MessageList";
 import "./style.scss";
 
 let fundInterval;
-const sound = new Audio("./assets/notification.mp3");
+
 
 export default class App extends Component {
 
@@ -33,6 +33,9 @@ export default class App extends Component {
   componentDidMount() {
     this.getSeed();
     this.getMessages();
+    this.setState({
+      sound: new Audio(this.props.soundpath)
+    });
     if (sessionStorage.getItem('wasInitialSent')) {
       this.setState({wasInitialSent: true});
     }
@@ -166,7 +169,7 @@ export default class App extends Component {
                       if (hasToScroll) {
                         this.scrollToBottom();
                         if (document.visibilityState!=="visible" && this.state.isChatOpened){
-                          sound.play();
+                          this.state.sound.play();
                         }
                       }
                     }).catch((e) => console.log(e))
