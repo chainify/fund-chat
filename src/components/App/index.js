@@ -7,6 +7,7 @@ import MessageList from "../MessageList";
 import "./style.scss";
 
 let fundInterval;
+const sound = new Audio("./assets/notification.mp3");
 
 export default class App extends Component {
 
@@ -22,7 +23,7 @@ export default class App extends Component {
     this.state.age = "";
     this.state.question = "";
     this.state.operator = "";
-    this.state.sessionFinished = false;
+    this.state.sessionFinished = true;
     // this.state.seed = "canvas okay bus gorilla chest debate upgrade marriage raw arrange member tobacco";
     this.state.seed = this.getSeed();
     this.state.messagesList = {}
@@ -109,7 +110,6 @@ export default class App extends Component {
     let endpoint = '';
     let operator = '';
     endpoint = `https://chainify.org/api/v1/cdm/${publicKey(this.state.seed)}/${this.props.fundpubkey}`;
-    console.log(endpoint);
     fundInterval = setInterval(() => {
       
       if (this.state.wasInitialSent && this.state.isChatOpened) {
@@ -146,7 +146,10 @@ export default class App extends Component {
                       if (cdms.length > 0 && cdms[cdms.length-1].hash === '7f642be8c8c3b67d3a1119fb9ab69e8c5505347140f2e78b5833f96997fd8424') {
                         clearInterval(operatorInterval);
                         this.setState({sessionFinished: true});
-                        this.scrollToBottom();
+                        const newSeed = Seed.create().phrase;
+                        sessionStorage.setItem('seed', newSeed);
+                        this.setState({seed: newSeed});
+                        clearInterval(operatorInterval);
                       }
                       const cdmstxIds = cdms.map(cdm => cdm.txId);
                       const decryptedMessages = cdms.map((cdm) => {
@@ -162,6 +165,9 @@ export default class App extends Component {
                   
                       if (hasToScroll) {
                         this.scrollToBottom();
+                        if (document.visibilityState!=="visible" && this.state.isChatOpened){
+                          sound.play();
+                        }
                       }
                     }).catch((e) => console.log(e))
                   }
@@ -225,9 +231,10 @@ export default class App extends Component {
   }
 
   renderWelcomeForm() {
-    if (this.state.messages.length === 0 && this.state.pendingMessages.length === 0) {
+    if (this.state.messages.length === 0 && this.state.pendingMessages.length === 0 || this.state.sessionFinished) {
       return (
         <form action="" class="cdm-welcome-form" onSubmit={this.handleWelcomeFormSubmit}>
+          {this.state.sessionFinished && <p class="cdm-welcome-form__ended">Чат завершен. Для твоей безопасности мы удалили все сообщения.</p>}
           <div class="cdm-welcome-form__row">
             <div className="cdm-welcome-form__input">
               <input type="text" name="name" placeholder="имя или ник" onInput={this.handleChange} class="cdm-input"/>
@@ -247,7 +254,7 @@ export default class App extends Component {
 
   renderSendMessageForm() {
     const hasNoAnswer = (this.state.messages.length === 1 || (this.state.messages.length === 0 && this.state.pendingMessages.length === 1));
-    if (this.state.messages.length === 0 && this.state.pendingMessages.length === 0 || hasNoAnswer) {
+    if (this.state.messages.length === 0 && this.state.pendingMessages.length === 0 || hasNoAnswer || this.sessionFinished) {
       return false
     } else {
       return (
