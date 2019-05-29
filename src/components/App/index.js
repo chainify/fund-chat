@@ -146,6 +146,7 @@ export default class App extends Component {
                       if (cdms.length > 0 && cdms[cdms.length-1].hash === '7f642be8c8c3b67d3a1119fb9ab69e8c5505347140f2e78b5833f96997fd8424') {
                         clearInterval(operatorInterval);
                         this.setState({sessionFinished: true});
+                        this.scrollToBottom();
                       }
                       const cdmstxIds = cdms.map(cdm => cdm.txId);
                       const decryptedMessages = cdms.map((cdm) => {
