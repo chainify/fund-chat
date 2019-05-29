@@ -23,7 +23,7 @@ export default class App extends Component {
     this.state.age = "";
     this.state.question = "";
     this.state.operator = "";
-    this.state.sessionFinished = true;
+    this.state.sessionFinished = false;
     // this.state.seed = "canvas okay bus gorilla chest debate upgrade marriage raw arrange member tobacco";
     this.state.seed = this.getSeed();
     this.state.messagesList = {}
@@ -210,7 +210,6 @@ export default class App extends Component {
       }
       const formData = new FormData();
       formData.append('message', encryptedMessage);
-      console.log(recipientPublicKey);
       formData.append('recipient', recipientPublicKey);
       const formDataNewClient = new FormData();
       formDataNewClient.append('publicKey', alice.public);
