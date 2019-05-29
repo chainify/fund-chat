@@ -28,14 +28,14 @@ export default class App extends Component {
     this.state.seed = this.getSeed();
     this.state.messagesList = {}
     this.state.wasInitialSent = false;
+    this.state.areWorkingHours = true;
   }
   
   componentDidMount() {
     this.getSeed();
     this.getMessages();
-    this.setState({
-      sound: new Audio(this.props.soundpath)
-    });
+    this.setSound();
+    this.checkWorkingHours();
     if (sessionStorage.getItem('wasInitialSent')) {
       this.setState({wasInitialSent: true});
     }
@@ -54,6 +54,22 @@ export default class App extends Component {
     };
   }
 
+  setSound() {
+    this.setState({
+      sound: new Audio(this.props.soundpath)
+    });
+  }
+
+  checkWorkingHours() {
+    const currentDate = new Date();
+    const timezoneOffset = currentDate.getTimezoneOffset()/60 + 3; // from Moscow time
+    console.log(timezoneOffset);
+    const normalizedHours = currentDate.getHours() -  timezoneOffset;
+    console.log(normalizedHours);
+    const areWorkingHours = (normalizedHours >= this.props.starttime) && (normalizedHours <= this.props.endtime);
+    this.setState({areWorkingHours});
+  }
+
   getSeed() {
     const sessionSeed = sessionStorage.getItem('seed');
     if (!sessionSeed) {
@@ -67,7 +83,6 @@ export default class App extends Component {
   
   changePopupState = () => {
     this.setState({isChatOpened: !this.state.isChatOpened});
-
   }
   
   handleChange = (event) => {
@@ -245,7 +260,7 @@ export default class App extends Component {
               <input type="text" name="age" placeholder="возраст" onInput={this.handleChange} class="cdm-input"/>
             </div>
           </div>
-          <textarea placeholder="Ваш вопрос" name="question" class="cdm-welcome-form__question cdm-textarea" onInput={this.handleChange}></textarea>
+          <textarea placeholder="" name="question" class="cdm-welcome-form__question cdm-textarea" onInput={this.handleChange}></textarea>
           <button type="submit" class="cdm-welcome-form__submit cdm-btn">Отправить</button>
         </form>
       )
@@ -276,14 +291,18 @@ export default class App extends Component {
 	  <article class={chatClass}>
 	    <div class="cdm-chat__wrapper">
 	    <div class="cdm-chat__container">
-	      <div class="cdm-chat__content">
-          {/*{ chatStarted && (<div class="cdm-chat__welcome"><h3 class="cdm-chat__welcometext">
-            Здравствуйте! <br/> Задайте свой вопрос консультанту
-          </h3> </div>)}*/}
-          {this.renderWelcomeForm()}
-	        <MessageList messages={this.state.messages} pendingMessages={this.state.pendingMessages} wasForwarded={this.state.operator!==''} setMessagesListRef={this.setMessagesListRef}/>
-	        {!this.state.sessionFinished && this.renderSendMessageForm()}
-	     </div>
+	      
+          {this.state.areWorkingHours ? (
+            <div class="cdm-chat__content">
+              {this.renderWelcomeForm()}
+              <MessageList messages={this.state.messages} pendingMessages={this.state.pendingMessages} wasForwarded={this.state.operator!==''} setMessagesListRef={this.setMessagesListRef}/>
+              {!this.state.sessionFinished && this.renderSendMessageForm()}
+            </div>
+          ) : (
+            <div class="cdm-chat__content">
+              <p class="cdm-chat__workinghours">Время работы с 15 до 22</p>
+            </div>
+          )}
 	    </div>
 	    <button href="#" class="cdm-chat__close" onClick={this.changePopupState}>x</button>
 	   </div>
