@@ -156,7 +156,14 @@ export default class App extends Component {
         // begin getting first message
         axios.get(endpoint).then((res) => {
           const cdms = res.data.cdms;
-          
+          if (this.wasChatClosed(cdms)) {
+            clearInterval(operatorInterval);
+            this.setState({sessionFinished: true});
+            const newSeed = Seed.create().phrase;
+            sessionStorage.setItem('seed', newSeed);
+            this.setState({seed: newSeed});
+            clearInterval(operatorInterval);
+          }
           if (cdms.length > 0) {
             const cdmstxIds = cdms.map(cdm => cdm.txId);
             const decryptedMessages = cdms.map((cdm) => {
