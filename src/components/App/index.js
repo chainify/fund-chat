@@ -128,7 +128,7 @@ export default class App extends Component {
       if (cdm.type==='incoming') {
         decryptedMessage = this.decryptMessage(cdm.message, cdm.logicalSender);
       }
-      return decryptedMessage.toLowerCase() === 'Консультация завершена';
+      return decryptedMessage.toLowerCase() === 'консультация завершена';
     }
     return false;
   }
