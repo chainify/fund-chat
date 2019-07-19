@@ -67,7 +67,7 @@ export default class App extends Component {
     const normalizedHours = currentDate.getHours() -  timezoneOffset;
     // console.log(normalizedHours);
     const areWorkingHours = (normalizedHours >= this.props.starttime) && (normalizedHours <= this.props.endtime);
-    this.setState({areWorkingHours:true});
+    this.setState({areWorkingHours});
   }
 
   getSeed() {
@@ -154,10 +154,8 @@ export default class App extends Component {
     endpoint = `https://nolik.im/api/v1/cdms/${publicKey(this.state.seed)}/${groupHash}`;
     fundInterval = setInterval(() => {    
       if (this.state.wasInitialSent && this.state.isChatOpened) {
-        console.log('fundInterval');
         // begin getting first message
         axios.get(endpoint).then((res) => {
-          console.log('fundRequest');
           cdms = res.data.cdms;
           if (cdms.length > 0) { 
             const cdmstxIds = cdms.map(cdm => cdm.txId);
@@ -194,10 +192,8 @@ export default class App extends Component {
       
     const groupInterval = setInterval(() => {
       if (this.state.operatorGroupHash ==='' && (this.state.wasInitialSent || cdms.length > 1) && this.state.isChatOpened) {
-        console.log('groupnterval');
         const groupsEndPoint = `https://nolik.im/api/v1/groups/${publicKey(this.state.seed)}`;
         axios.get(groupsEndPoint).then(res => {
-          console.log('group Request');
           const groups = res.data.groups;
           const operatorGroup = groups.filter(group => {
             if (!group.lastCdm) {
@@ -231,7 +227,6 @@ export default class App extends Component {
         endpoint = `https://nolik.im/api/v1/cdms/${publicKey(this.state.seed)}/${operatorGroupHash}`;
           
           axios.get(endpoint).then((res) => {
-            console.log('operator Request');
             const cdms = res.data.cdms;
             if (this.wasChatClosed(cdms)) {
               clearInterval(operatorInterval);
