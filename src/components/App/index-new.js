@@ -146,19 +146,15 @@ export default class App extends Component {
     let endpoint = '';
     let operatorGroupHash = '';
     let operators = [];
-    let cdms = [];
-    let initialMessage;
     const alicePubKey = publicKey(this.state.seed);
     // console.log('alicePublicKey', alicePubKey);
     const groupHash = sha256([this.props.fundpubkey,alicePubKey].sort().join(''));
     endpoint = `https://nolik.im/api/v1/cdms/${publicKey(this.state.seed)}/${groupHash}`;
     fundInterval = setInterval(() => {    
       if (this.state.wasInitialSent && this.state.isChatOpened) {
-        console.log('fundInterval');
         // begin getting first message
         axios.get(endpoint).then((res) => {
-          console.log('fundRequest');
-          cdms = res.data.cdms;
+          const cdms = res.data.cdms;
           if (cdms.length > 0) { 
             const cdmstxIds = cdms.map(cdm => cdm.txId);
             const decryptedMessages = cdms.map((cdm) => {
@@ -176,7 +172,7 @@ export default class App extends Component {
             }
             const hasToScroll = this.state.messages.length !== decryptedMessages.length;
             
-            initialMessage = {
+            const initialMessage = {
               message: decryptedMessages[0],
               timestamp: cdms[0].timestamp,
               type: cdms[0].type,
@@ -187,86 +183,80 @@ export default class App extends Component {
             }
             
             // end getting first message
-        }}).catch((e) => console.log(e))
-      }
-    }, 1000); //end fundInterval
-
-      
-    const groupInterval = setInterval(() => {
-      if (this.state.operatorGroupHash ==='' && (this.state.wasInitialSent || cdms.length > 1) && this.state.isChatOpened) {
-        console.log('groupnterval');
-        const groupsEndPoint = `https://nolik.im/api/v1/groups/${publicKey(this.state.seed)}`;
-        axios.get(groupsEndPoint).then(res => {
-          console.log('group Request');
-          const groups = res.data.groups;
-          const operatorGroup = groups.filter(group => {
-            if (!group.lastCdm) {
-              return false
-            }
-            return group.lastCdm.hash === cdms[0].hash
-          })[0];             
-          let filteredOperators = [];
-          if (operatorGroup) {
-           filteredOperators = operatorGroup.lastCdm.sharedWith.filter(item => [this.props.fundpubkey, publicKey(this.state.seed)].indexOf(item.publicKey) === -1);
-          }
-          let operatorPubKey = '';
-          
-          if (filteredOperators.length > 0) {
-            operatorPubKey = filteredOperators[0].publicKey;
-            this.setState({operators:[operatorPubKey]});
-            clearInterval(groupInterval);
-          }
-          if (operatorPubKey !== '') {
-            operatorGroupHash = sha256([operatorPubKey,this.props.fundpubkey,alicePubKey].sort().join(''));
-            this.setState({operatorGroupHash});
-          }
-        })
-      } 
-    }, 1000); 
-    
-    const operatorInterval = setInterval(() => {
-      if (this.state.operatorGroupHash !=='' && this.state.isChatOpened) {
-        clearInterval(fundInterval);
-        clearInterval(groupInterval);
-        endpoint = `https://nolik.im/api/v1/cdms/${publicKey(this.state.seed)}/${operatorGroupHash}`;
-          
-          axios.get(endpoint).then((res) => {
-            console.log('operator Request');
-            const cdms = res.data.cdms;
-            if (this.wasChatClosed(cdms)) {
-              clearInterval(operatorInterval);
-              this.setState({sessionFinished: true});
-              const newSeed = Seed.create().phrase;
-              sessionStorage.setItem('seed', newSeed);
-              this.setState({seed: newSeed});
-              clearInterval(operatorInterval);
-            }
-            const cdmstxIds = cdms.map(cdm => cdm.txId);
-            const decryptedMessages = cdms.map((cdm) => {
-              let decryptedMessage = '';
-              if (cdm.type==='incoming') {
-                decryptedMessage = this.decryptMessage(cdm.message, cdm.logicalSender);
-              } else {
-                decryptedMessage = this.decryptMessage(cdm.message, cdm.recipient);
-              }
-              return {message: decryptedMessage, timestamp: cdm.timestamp, type: cdm.type, recipient: cdm.recipient}
-            }).splice(1);
-            const nonDeliveredMessages = this.state.pendingMessages.filter(message => !cdmstxIds.includes(message.txId));
-            if (nonDeliveredMessages.length === 0) {
-              this.setState({pendingMessages: []});
-            }
-            const hasToScroll = this.state.messages.length !== decryptedMessages.length;
             
-            this.setState({messages: [initialMessage.message, ...decryptedMessages]});
-        
-            if (hasToScroll) {
-              this.scrollToBottom();
-              if (document.visibilityState!=="visible" && this.state.isChatOpened){
-                this.state.sound.play();
-              }
+            if (this.state.operatorGroupHash ==='') {
+              const groupsEndPoint = `https://nolik.im/api/v1/groups/${publicKey(this.state.seed)}`;
+              const groupInterval = setInterval(() => {
+                if (this.state.operatorGroupHash ==='') {
+                  axios.get(groupsEndPoint).then(res => {
+                    
+                    const groups = res.data.groups;
+                    const operatorGroup = groups.filter(group => group.lastCdm && (group.lastCdm.hash === cdms[0].hash))[0];             
+                    const filteredOperators = operatorGroup.lastCdm.sharedWith.filter(item => [this.props.fundpubkey, publicKey(this.state.seed)].indexOf(item.publicKey) === -1);
+                    let operatorPubKey = '';
+                    
+                    if (filteredOperators.length > 0) {
+                      operatorPubKey = filteredOperators[0].publicKey;
+                      this.setState({operators:[operatorPubKey]});
+                      clearInterval(groupInterval);
+                    }
+                    if (operatorPubKey !== '') {
+                      operatorGroupHash = sha256([operatorPubKey,this.props.fundpubkey,alicePubKey].sort().join(''));
+                      this.setState({operatorGroupHash});
+                    }
+                  })
+                } 
+              }, 1000); 
             }
-          }).catch((e) => console.log(e))
-        }
+            if (this.state.operatorGroupHash!=='') {
+                clearInterval(fundInterval);
+                clearInterval(groupInterval);
+                const alicePubKey = publicKey(this.state.seed);
+                endpoint = `https://nolik.im/api/v1/cdms/${publicKey(this.state.seed)}/${operatorGroupHash}`;
+                const operatorInterval = setInterval(() => {
+
+                  if (this.state.wasInitialSent && this.state.isChatOpened) {
+                      axios.get(endpoint).then((res) => {
+                        const cdms = res.data.cdms;
+                        if (this.wasChatClosed(cdms)) {
+                          clearInterval(operatorInterval);
+                          this.setState({sessionFinished: true});
+                          const newSeed = Seed.create().phrase;
+                          sessionStorage.setItem('seed', newSeed);
+                          this.setState({seed: newSeed});
+                          clearInterval(operatorInterval);
+                        }
+                        const cdmstxIds = cdms.map(cdm => cdm.txId);
+                        const decryptedMessages = cdms.map((cdm) => {
+                          let decryptedMessage = '';
+                          if (cdm.type==='incoming') {
+                            decryptedMessage = this.decryptMessage(cdm.message, cdm.logicalSender);
+                          } else {
+                            decryptedMessage = this.decryptMessage(cdm.message, cdm.recipient);
+                          }
+                          return {message: decryptedMessage, timestamp: cdm.timestamp, type: cdm.type, recipient: cdm.recipient}
+                        }).splice(1);
+                        const nonDeliveredMessages = this.state.pendingMessages.filter(message => !cdmstxIds.includes(message.txId));
+                        if (nonDeliveredMessages.length === 0) {
+                          this.setState({pendingMessages: []});
+                        }
+                        const hasToScroll = this.state.messages.length !== decryptedMessages.length;
+                        
+                        this.setState({messages: [initialMessage.message, ...decryptedMessages]});
+                    
+                        if (hasToScroll) {
+                          this.scrollToBottom();
+                          if (document.visibilityState!=="visible" && this.state.isChatOpened){
+                            this.state.sound.play();
+                          }
+                        }
+                      }).catch((e) => console.log(e))
+                    }
+                  }, 1000);
+                }
+            } //end if operatorGroupHash
+        }).catch((e) => console.log(e))
+      }
     }, 1000);
   }
 
@@ -382,15 +372,15 @@ export default class App extends Component {
     }
   }
   
-  render(props, state) {
-   const chatClass = this.state.isChatOpened ? "cdm-chat cdm-chat--opened" : 'cdm-chat';
+	render(props, state) {
+	 const chatClass = this.state.isChatOpened ? "cdm-chat cdm-chat--opened" : 'cdm-chat';
    const chatStarted = (state.messages.length === 0 && state.pendingMessages.length === 0);
 
-   return (
-    <article class={chatClass}>
-      <div class="cdm-chat__wrapper">
-      <div class="cdm-chat__container">
-        
+	 return (
+	  <article class={chatClass}>
+	    <div class="cdm-chat__wrapper">
+	    <div class="cdm-chat__container">
+	      
           {this.state.areWorkingHours ? (
             <div class="cdm-chat__content">
               {this.renderWelcomeForm()}
@@ -402,12 +392,12 @@ export default class App extends Component {
               <p class="cdm-chat__workinghours">Время работы с 15 до 22</p>
             </div>
           )}
-      </div>
-      <button href="#" class="cdm-chat__close" onClick={this.changePopupState}>x</button>
-     </div>
-    </article>
-   )
-  }
+	    </div>
+	    <button href="#" class="cdm-chat__close" onClick={this.changePopupState}>x</button>
+	   </div>
+	  </article>
+	 )
+	}
 }
 
 
