@@ -158,32 +158,41 @@ export default class App extends Component {
         axios.get(endpoint).then((res) => {
           cdms = res.data.cdms;
           if (cdms.length > 0) { 
-            const cdmstxIds = cdms.map(cdm => cdm.txId);
-            const decryptedMessages = cdms.map((cdm) => {
-              let decryptedMessage = '';
-              if (cdm.type==='incoming') {
-                decryptedMessage = this.decryptMessage(cdm.message, cdm.logicalSender);
-              } else {
-                decryptedMessage = this.decryptMessage(cdm.message, cdm.recipient);
+            if (this.wasChatClosed(cdms)) {
+              clearInterval(fundInterval);
+              clearInterval(operatorInterval);
+              clearInterval(groupInterval);
+              this.setState({sessionFinished: true});
+              const newSeed = Seed.create().phrase;
+              sessionStorage.setItem('seed', newSeed);
+              this.setState({seed: newSeed});
+            } else {
+              const cdmstxIds = cdms.map(cdm => cdm.txId);
+              const decryptedMessages = cdms.map((cdm) => {
+                let decryptedMessage = '';
+                if (cdm.type==='incoming') {
+                  decryptedMessage = this.decryptMessage(cdm.message, cdm.logicalSender);
+                } else {
+                  decryptedMessage = this.decryptMessage(cdm.message, cdm.recipient);
+                }
+                return {message: decryptedMessage, timestamp: cdm.timestamp, type: cdm.type, recipient: cdm.recipient}
+              });
+              const nonDeliveredMessages = this.state.pendingMessages.filter(message => !cdmstxIds.includes(message.txId));
+              if (nonDeliveredMessages.length === 0) {
+                this.setState({pendingMessages: []});
               }
-              return {message: decryptedMessage, timestamp: cdm.timestamp, type: cdm.type, recipient: cdm.recipient}
-            });
-            const nonDeliveredMessages = this.state.pendingMessages.filter(message => !cdmstxIds.includes(message.txId));
-            if (nonDeliveredMessages.length === 0) {
-              this.setState({pendingMessages: []});
+              const hasToScroll = this.state.messages.length !== decryptedMessages.length;
+              
+              initialMessage = {
+                message: decryptedMessages[0],
+                timestamp: cdms[0].timestamp,
+                type: cdms[0].type,
+              }
+              this.setState({initialMessage: initialMessage, messages: decryptedMessages});
+              if (hasToScroll) {
+                this.scrollToBottom();
+              }
             }
-            const hasToScroll = this.state.messages.length !== decryptedMessages.length;
-            
-            initialMessage = {
-              message: decryptedMessages[0],
-              timestamp: cdms[0].timestamp,
-              type: cdms[0].type,
-            }
-            this.setState({initialMessage: initialMessage, messages: decryptedMessages});
-            if (hasToScroll) {
-              this.scrollToBottom();
-            }
-            
             // end getting first message
         }}).catch((e) => console.log(e))
       }
