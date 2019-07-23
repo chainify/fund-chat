@@ -50,7 +50,7 @@ class FormStore {
         }
 
         this.publicKey = publicKey(this.seed);
-        this.privateKey = publicKey(this.seed);
+        this.privateKey = privateKey(this.seed);
         this.heartbeatStatus = 'init';
     }
 }

@@ -1,6 +1,6 @@
 import { action, observable } from 'mobx';
 import sha256 from 'js-sha256';
-import { getSharedKey, encryptMessage, signBytes, base58encode, verifySignature, decryptMessage } from "../components/waves-crypto";
+import { getSharedKey, encryptMessage, signBytes, base58encode, verifySignature, decryptMessage } from "../components/waves-crypto"
 
 class CryptoStore {
     stores = null;
