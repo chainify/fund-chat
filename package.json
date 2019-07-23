@@ -25,19 +25,29 @@
     "microbundle": "^0.11.0",
     "node-sass": "^4.12.0",
     "preact-cli": "^2.2.1",
+    "preact-cli-plugin-env-vars": "^1.2.1",
     "preact-render-to-string": "^3.7.0",
     "preact-widget-scripts": "^0.6.0",
     "sass-loader": "^6.0.6"
   },
   "dependencies": {
     "@waves/signature-generator": "^5.2.1",
+    "antd": "^3.20.5",
     "axios": "^0.18.0",
     "crypto-js": "^3.1.9-1",
+    "dotenv": "^8.0.0",
+    "ifvisible.js": "^1.0.6",
     "js-sha256": "^0.9.0",
+    "level-js": "^4.0.1",
+    "levelup": "^4.1.0",
+    "mobx": "^5.13.0",
+    "mobx-preact": "^3.0.0",
+    "mobx-react": "^6.1.1",
     "preact": "^8.2.5",
     "preact-compat": "^3.17.0",
     "preact-habitat": "^3.1.0",
-    "preact-router": "^2.5.7"
+    "preact-router": "^2.5.7",
+    "react-mousetrap": "^0.2.0"
   },
   "jest": {
     "verbose": true,

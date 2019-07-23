@@ -1,6 +1,13 @@
+const webpack = require('webpack');
+const { parsed: localEnv } = require('dotenv').config({
+  path: process.env.NODE_ENV === 'production' ? '.env.prod' : '.env',
+});
+
 export default (config, env, helpers) => {
   delete config.entry.polyfills;
   config.output.filename = "[name].js";
+
+  config.plugins.push(new webpack.EnvironmentPlugin(localEnv));
 
   let { plugin } = helpers.getPluginsByName(config, "ExtractTextPlugin")[0];
   plugin.options.disable = false;

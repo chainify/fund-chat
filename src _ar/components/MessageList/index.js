@@ -27,7 +27,7 @@ export default class MessageList extends Component {
         {props.messages.map((message)=>this.renderMessage(message))}
         {props.pendingMessages.map((message)=>this.renderMessage(message, true))}
         {hasNoAnswer && !wasForwarded && (<li class="cdm-chat-message cdm-chat-message--wait">Если консультант не отвечает, не расстраивайся, напиши в чат через некоторое время или обратись в службу доверия 8 800 2000122</li>)}
-        {wasForwarded && hasNoAnswer && (<li class="cdm-chat-message cdm-chat-message--wait">Ваше сообщение передано консультанту. Он ответит в течение 3-х минут.</li>)}
+        {wasForwarded && hasNoAnswer && (<li class="cdm-chat-message cdm-chat-message--wait">Дождись ответа консультанта.</li>)}
       </ul>
     )
   }
