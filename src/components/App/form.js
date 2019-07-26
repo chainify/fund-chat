@@ -1,7 +1,7 @@
 import { h, render, Component } from "preact";
 import { observer, inject } from "mobx-preact";
 import { autorun } from 'mobx';
-import { Row, Col, Input, Button, Icon } from 'antd';
+import { Row, Col, Button } from 'antd';
 
 @inject('form', 'alice', 'cdms', 'index')
 @observer
@@ -23,7 +23,6 @@ export default class Form extends Component {
 
         autorun(() => {
             if (alice.publicKey && index.fundPublicKey) {
-                console.log('alice.publicKey && index.fundPublicKey');
                 const publicKeys = [alice.publicKey, index.fundPublicKey];
                 const groupHash = cdms.getGroupHash(publicKeys);
                 cdms.groupHash = groupHash;
@@ -39,43 +38,46 @@ export default class Form extends Component {
 
     render() {
         const { form, cdms } = this.props;
-        const imputStyle = {
+        const inputStyle = {
             border: 'none',
             background: 'transparent',
-            borderRadius: 10,
             margin: 0,
             padding: '0 10px',
             outline: 'none',
             boxShadow: 'none',
             fontSize: '20px',
-            lineHeight: '24px',
+            lineHeight: '40px',
+            height: '40px',
             resize: 'none',
             caretColor: '#2196f3',
-        };
-
+            fontFamily: 'Roboto, sans-serif'
+        }
         return (
-            <div className="formContainer">
-                <div className="formContent">
+            <div className="cnfy_formContainer">
+                <div className="cnfy_formContent">
                     <Row>
                         <Col xs={{ span: 24 }} sm={{ span: 12 }} md={{ span: 8 }} lg={{ span: 8 }}>
-                            <Input
-                                size="large"
+                            <input
+                                name="name"
+                                type="text"
                                 placeholder="Твое имя"
                                 value={form.name}
-                                onChange={e => {
+                                onInput={e => {                                    
                                     form.name = e.target.value;
                                 }}
                                 autoFocus
-                                style={imputStyle}
+                                className="cnfy_input"
+                                style={inputStyle}
                             />
                             <p>&nbsp;</p>
                         </Col>
                         <Col xs={{ span: 24 }} sm={{ span: 12 }} md={{ span: 8, offset: 1 }} lg={{ span: 8, offset: 1  }}>
-                            <Input
-                                size="large"
+                            <input
+                                name="age"
+                                type="text"
                                 placeholder="Твой возраст"
                                 value={form.age}
-                                onChange={e => {
+                                onInput={e => {
                                     form.age = e.target.value;
                                 }}
                                 onFocus={_ => {
@@ -89,7 +91,8 @@ export default class Form extends Component {
                                         form.age = `${form.age} лет`;
                                     }
                                 }}
-                                style={imputStyle}
+                                className="cnfy_input"
+                                style={inputStyle}
                             />
                             <p>&nbsp;</p>
                         </Col>

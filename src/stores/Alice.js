@@ -1,7 +1,6 @@
 import { action, observable } from 'mobx';
 import axios from 'axios';
-import { Seed } from '@waves/signature-generator'
-import { publicKey, privateKey } from "../components/waves-crypto";
+import { randomSeed, publicKey, privateKey } from '@waves/ts-lib-crypto';
 
 class FormStore {
     stores = null;
@@ -18,14 +17,19 @@ class FormStore {
 
     @action
     heartbeat() {
-        const {  utils, wrapper } = this.stores;
+        const {  utils, cdms } = this.stores;
         const formConfig = {};
         const formData = new FormData();
         formData.append('publicKey', this.publicKey);
         this.heartbeatStatus = 'pending';
         utils.sleep(1000).then(_ => {
-            axios.post(`${process.env.API_HOST}/api/v1/accounts`, formData, formConfig)
-                .then(_ => {  
+            axios.post(`${process.env.API_HOST}/api/v1/heartbeat`, formData, formConfig)
+                .then(res => {
+                    const lastCdmHash = res.data.lastCdm ? res.data.lastCdm[0] : null;
+                    
+                    if (cdms.lastCdmHash !== lastCdmHash) {
+                        cdms.lastCdmHash = lastCdmHash;
+                    }
                     this.heartbeatStatus = 'success';
                 })
                 .catch(e => {
@@ -36,13 +40,10 @@ class FormStore {
 
     @action
     initAlice() {
-        const { form } = this.stores;
-        const newSeed = Seed.create().phrase;
+        const newSeed = randomSeed();
         const seedPhrase = sessionStorage.getItem('seedPhrase');
-        console.log('alice init', seedPhrase);
         
         if (seedPhrase) {
-            console.log('existing user');
             this.seed = seedPhrase;
         } else {
             sessionStorage.setItem('seedPhrase', newSeed);

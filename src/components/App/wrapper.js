@@ -1,19 +1,25 @@
 import { h, render, Component } from "preact";
 import { observer, inject } from "mobx-preact";
-import { Row, Col, Button, Icon, Popconfirm, message } from 'antd';
+import { Row, Col, Button, Icon, Popconfirm } from 'antd';
 import { autorun } from 'mobx';
+import { disableBodyScroll, clearAllBodyScrollLocks } from 'body-scroll-lock';
 
-@inject('alice', 'wrapper', 'form', 'cdms', 'chat')
+const targetElement = document.querySelector("#someElementId");
+
+
+@inject('alice', 'wrapper', 'form', 'cdms')
 @observer
 export default class Wrapper extends Component {
 
     constructor(props) {
         super(props);
-        const { wrapper, alice, chat, cdms, form } = props;
+        const { wrapper, alice } = props;
 
         autorun(() => {
             if (wrapper.isActive === true) {
                 alice.initAlice();
+                wrapper.targetElement = document.querySelector('body');
+                disableBodyScroll(wrapper.  );
             }
         });
     }
@@ -26,14 +32,18 @@ export default class Wrapper extends Component {
         }
     }
 
+    componentWillUnmount() {
+        clearAllBodyScrollLocks();
+    }
+
     render() {
-        const { wrapper, form } = this.props;
+        const { wrapper, form, cdms } = this.props;
         return (
-            <div className={`wrapper ${wrapper.isActive && 'active'}`}>
-                <div className="closeButton">
+            <div className={`cnfy_wrapper ${wrapper.isActive && 'cnfy_active'}`}>
+                <div className="cnfy_closeButton">
                     <Popconfirm
                         placement="rightBottom"
-                        title="Закрыть сессию?"
+                        title={`Закрыть сессию?${cdms.list && cdms.list.length > 0 ? ' Все сообщения будут стерты.' : ''}`}
                         onConfirm={_ => {
                             wrapper.closeSession();
                         }}

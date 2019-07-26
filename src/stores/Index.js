@@ -10,6 +10,8 @@ class IndexStore {
     @observable sound = null;
     @observable startTime = null;
     @observable endTime = null;
+
+    @observable properTime = null;
 }
 
 export default IndexStore;

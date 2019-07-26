@@ -32,8 +32,11 @@
   },
   "dependencies": {
     "@waves/signature-generator": "^5.2.1",
+    "@waves/ts-lib-crypto": "^1.0.2",
+    "@waves/waves-crypto": "^3.0.17",
     "antd": "^3.20.5",
     "axios": "^0.18.0",
+    "body-scroll-lock": "^2.6.4",
     "crypto-js": "^3.1.9-1",
     "dotenv": "^8.0.0",
     "ifvisible.js": "^1.0.6",

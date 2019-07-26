@@ -11,7 +11,8 @@ class ChatStore {
     @observable textareaFocused = false;
     @observable timerFrom = null;
     @observable noResponse = null;
-    @observable responseTimeout = 240;
+    @observable responseTimeout = 360;
+    @observable isCleared = false;
 
     @action
     initChat() {
@@ -20,6 +21,15 @@ class ChatStore {
         this.textareaFocused = false;
         this.noResponse = null;
         this.timerFrom = null;
+        this.isCleared = false;
+    }
+
+    @action
+    clearChat() {
+        const { cdms } = this.stores;
+        cdms.list = null;
+        this.isCleared = true;
+        sessionStorage.clear();
     }
 }
 

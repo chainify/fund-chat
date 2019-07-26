@@ -8,6 +8,6 @@ import App from "./components/App";
 let _habitat = habitat(App);
 
 _habitat.render({
-	selector: '#app',
+	selector: '#cnfy_app',
   inline: false
 });

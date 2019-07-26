@@ -3,27 +3,22 @@ import "./style.scss";
 import { observer, inject } from "mobx-preact";
 import { autorun } from "mobx";
 
-@inject('cdms', 'wrapper')
+@inject('cdms')
 @observer
 export default class Cdms extends Component {
 
     constructor(props) {
         super(props);
-        const { wrapper, cdms } = props
+        const { cdms } = props
 
-        this.cdmPeriodic = autorun(() => {
-            if (
-                ['success', 'error'].indexOf(cdms.getListStatus) > -1 &&
-                wrapper.isActive &&
-                cdms.list.length > 0
-            ) {
+        autorun(() => {
+            if (cdms.lastCdmHash) {
                 cdms.getList();
             }
-        });
+        })
     }
 
     componentDidMount() {
-        const { cdms } = this.props;
         this.scrollToBottom();
     }
 
@@ -42,14 +37,14 @@ export default class Cdms extends Component {
     render() {
         const { cdms } = this.props;
         return (
-            <div className="cdms" ref={el => { this.cdmsDiv = el; }}>
-                <div className="list">
+            <div className="cnfy_cdms" ref={el => { this.cdmsDiv = el; }}>
+                <div className="cnfy_list">
                     {cdms.list && cdms.list.map(el => (
                         <div
                             key={`row_${el.hash}`}
-                            className={`row ${el.type}`}
+                            className={`cnfy_row ${el.type}`}
                         >
-                            <div className="cdm">{el.message}</div>
+                            <div className="cnfy_cdm">{el.message}</div>
                         </div>
                     ))}
                 </div>

@@ -3,6 +3,10 @@ const { parsed: localEnv } = require('dotenv').config({
   path: process.env.NODE_ENV === 'production' ? '.env.prod' : '.env',
 });
 
+console.log('\nlocalEnv', localEnv);
+console.log('\nNODE_ENV', process.env.NODE_ENV);
+
+
 export default (config, env, helpers) => {
   delete config.entry.polyfills;
   config.output.filename = "[name].js";

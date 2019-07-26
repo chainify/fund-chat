@@ -1,6 +1,9 @@
-import { action, observable } from 'mobx';
+import { action } from 'mobx';
 import sha256 from 'js-sha256';
-import { getSharedKey, encryptMessage, signBytes, base58encode, verifySignature, decryptMessage } from "../components/waves-crypto"
+import stringFromUTF8Array from './../utils/batostr';
+import { crypto } from '@waves/ts-lib-crypto';
+const { signBytes, verifySignature, base58Encode, sharedKey, messageEncrypt, messageDecrypt, keyPair } = crypto({output: 'Base58'});
+ 
 
 class CryptoStore {
     stores = null;
@@ -10,11 +13,11 @@ class CryptoStore {
 
     @action
     wrapCdm(msg) {
-        let cdm = '-----BEGIN_CDM_VERSION 3-----';
+        let cdm = '-----BEGIN_CDM_VERSION 4-----';
         cdm += '\r\n-----BEGIN_BLOCKCHAIN WAVES-----';
         cdm += msg;
         cdm += '\r\n-----END_BLOCKCHAIN WAVES-----';
-        cdm += '\r\n-----END_CDM_VERSION 3-----';
+        cdm += '\r\n-----END_CDM_VERSION 4-----';
         return cdm;
     }
 
@@ -30,13 +33,12 @@ class CryptoStore {
         for( let i = 0; i < recipients.length; i += 1) {
             
             const recipientPublicKey = recipients[i];
-            const sharedKey = base58encode(getSharedKey(alice.privateKey, recipientPublicKey));
-            const cypherText = encryptMessage(sharedKey, randMessage, 'chainify');
+            const cypherBytes = messageEncrypt(sharedKey(alice.privateKey, recipientPublicKey, 'chainify'), randMessage);
+            const cypherText = base58Encode(cypherBytes);
 
             const bytes = Uint8Array.from(messageHash)
-            const signature = signBytes(bytes, alice.seed);
-            // const sigVerify = verifySignature(alice.publicKey, Uint8Array.from(messageHash), signature)
-            // console.log('sigVerify', sigVerify);
+            const signature = signBytes(keyPair(alice.seed), bytes);
+            // const sigVerify = verifySignature(alice.publicKey, bytes, signature)
             
             msg += `\r\n-----BEGIN_RECIPIENT ${recipientPublicKey}-----`;
             msg += `\r\n-----BEGIN_MESSAGE-----\r\n${cypherText}\r\n-----END_MESSAGE-----`;
@@ -49,11 +51,8 @@ class CryptoStore {
 
     @action
     verifySig() {
-        const bytes = Uint8Array.from('066b07e0be41eba72c3322b537e505e3b29c97383b6dbc197f9f04e7915b8b14')
-        console.log(bytes);
-        
-        const sigVerify = verifySignature('czydvbuFMnmA8Qex6sE4fjS2orjefRJeGzr5SWz1oWR', bytes, '5GiqSDtFwatFTx3E4rPGsCsNtpbs32GMt9cLX2zXUn1Mr5xb1WxaCzcW6ypuUoBuk96kCgDzvSzXLiA9Dgjg63qc')
-        console.log('sigVerify', sigVerify);
+        const bytes = Uint8Array.from('066b07e0be41eba72c3322b537e505e3b29c97383b6dbc197f9f04e7915b8b14');
+        const sigVerify = verifySignature('czydvbuFMnmA8Qex6sE4fjS2orjefRJeGzr5SWz1oWR', bytes, '5GiqSDtFwatFTx3E4rPGsCsNtpbs32GMt9cLX2zXUn1Mr5xb1WxaCzcW6ypuUoBuk96kCgDzvSzXLiA9Dgjg63qc');
     }
 
     @action
@@ -65,10 +64,10 @@ class CryptoStore {
     @action
     decryptMessage(cypherText, bobPublicKey) {
         const { alice } = this.stores;
-        const sharedKey = base58encode(getSharedKey(alice.privateKey, bobPublicKey));
+        // const sharedKey = base58Encode(sk(alice.privateKey, bobPublicKey));
         let decryptedMessage;
         try {
-            decryptedMessage = decryptMessage(sharedKey, cypherText, 'chainify');
+            decryptedMessage = messageDecrypt(sharedKey(alice.privateKey, bobPublicKey, 'chainify'), cypherText);
         } catch (err) {
             decryptedMessage = '⚠️ Decoding error';
         }

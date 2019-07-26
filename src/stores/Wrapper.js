@@ -1,4 +1,5 @@
 import { action, observable } from 'mobx';
+import { enableBodyScroll } from 'body-scroll-lock';
 
 class IndexStore {
     stores = null;
@@ -7,6 +8,7 @@ class IndexStore {
     }
 
     @observable isActive = false;
+    @observable targetElement = null;
 
     @action
     closeSession() {
@@ -16,6 +18,7 @@ class IndexStore {
         chat.initChat();
         form.initForm();
         cdms.initCdms();
+        enableBodyScroll(this.targetElement);
     }
 }
 

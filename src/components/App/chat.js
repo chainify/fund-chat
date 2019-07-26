@@ -2,9 +2,10 @@ import { h, render, Component } from "preact";
 import "./style.scss";
 import { observer, inject } from "mobx-preact";
 import { autorun } from 'mobx';
-import { Button, Input, Divider } from 'antd';
+import { Button, Input } from 'antd';
 import Cdms from './cdms';
 import mouseTrap from 'react-mousetrap';
+
 const { TextArea } = Input;
 
 @inject('chat', 'cdms', 'alice', 'wrapper', 'form', 'index', 'crypto')
@@ -33,7 +34,9 @@ class Chat extends Component {
                     const now = Date.now() / 1000 | 0;
                     const diff = now - chat.timerFrom;
                     if (diff > chat.responseTimeout) {
-                        chat.noResponse = true;
+                        if (cdms.list && cdms.list.filter(el => el.type === 'incoming').length === 0) {
+                            chat.noResponse = true;
+                        }
                         clearInterval(this.noResponseTimer);
                     }
                 }, 1000);
@@ -54,8 +57,8 @@ class Chat extends Component {
 
     componentDidMount() {
         const { chat, cdms } = this.props;
-        if (this.nameInput) {
-            this.nameInput.focus();
+        if (this.messageTextArea) {
+            this.messageTextArea.focus();
         }
         
         this.props.bindShortcut('meta+enter', () => {
@@ -71,8 +74,12 @@ class Chat extends Component {
         });
 
         this.props.bindShortcut('enter', () => {
-            if (chat.textareaFocused) {
-                if (chat.message.trim() !== "") {
+            if (chat.textareaFocused) {                
+                if (
+                    chat.message.trim() !== "" &&
+                    cdms.list &&
+                    cdms.list.filter(el => el.type === 'pending').length === 0
+                ) {
                     cdms.sendCdm();
                 }
             }
@@ -84,23 +91,38 @@ class Chat extends Component {
     }
 
     render() {
-        const { chat, cdms, crypto } = this.props;
+        const { chat, cdms } = this.props;
+        const inputStyle = {
+            border: 'none',
+            background: 'transparent',
+            margin: 0,
+            padding: '0 10px!important',
+            color: '#333!importsant',
+            outline: 'none',
+            boxShadow: 'none',
+            fontSize: '20px',
+            lineHeight: '24px',
+            width: '100%',
+            resize: 'none',
+            caretColor: '#2196f3',
+            fontFamily: 'Roboto, sans-serif'
+        }
         return (
             <div>
                 {chat.noResponse === null && (
-                    <div className="noResponse">
+                    <div className="cnfy_noResponse">
                         Загрузка...
                     </div>
                 )}
                 {chat.noResponse === true && (
-                    <div className="noResponse">
+                    <div className="cnfy_noResponse">
                         Если консультант не отвечает, не расстраивайся, напиши в чат через некоторое время или обратись в службу доверия 8(800)200-0122
                     </div>
                 )}
                 {chat.noResponse === false && (
-                    <div className="chat">
+                    <div className="cnfy_chat">
                         <Cdms />
-                        {cdms.list && cdms.list.length > 0 && <div className="divider"><hr /></div>}
+                        {cdms.list && cdms.list.length > 0 && <div className="cnfy_divider"><hr /></div>}
                         {
                             cdms.list && 
                             cdms.list.length === 1 &&
@@ -109,16 +131,13 @@ class Chat extends Component {
                                 <div>Твое сообщение отправлено. Дождись ответа консультанта.</div>
                             ) : (
                                 <div>
-                                    <div class="message">
-                                        <div className="textarea">
+                                    <div className="cnfy_message">
+                                        <div className="cnfy_textarea">
                                             <TextArea
                                                 value={chat.message}
-                                                ref={input => { this.nameInput = input; }} 
+                                                ref={input => { this.messageTextArea = input; }} 
                                                 onChange={e => {
                                                     chat.message = e.target.value;
-                                                }}
-                                                onPressEnter={e => {
-                                                    e.preventDefault();
                                                 }}
                                                 onFocus={_ => {
                                                     chat.textareaFocused = true;
@@ -126,26 +145,16 @@ class Chat extends Component {
                                                 onBlur={_ => {
                                                     chat.textareaFocused = false;
                                                 }}
-                                                placeholder="Твое сообщение"
-                                                autosize={{ "minRows" : 1, "maxRows" : 8 }}
-                                                className="mousetrap"
-                                                style={{
-                                                    border: 'none',
-                                                    background: 'transparent',
-                                                    borderRadius: 10,
-                                                    margin: 0,
-                                                    padding: '0 10px',
-                                                    outline: 'none',
-                                                    boxShadow: 'none',
-                                                    fontSize: '20px',
-                                                    lineHeight: '24px',
-                                                    resize: 'none',
-                                                    caretColor: '#2196f3',
+                                                onPressEnter={e => {
+                                                    e.preventDefault();
                                                 }}
-                                                autoFocus
+                                                placeholder="Твое сообщение"
+                                                rows={8}
+                                                className="mousetrap cnfy_input"
+                                                style={inputStyle}
                                             />
                                         </div>
-                                        <div className="sendBtn">
+                                        <div className="cnfy_sendBtn">
                                             <Button
                                                 type="primary"
                                                 shape="round"

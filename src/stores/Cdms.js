@@ -12,6 +12,7 @@ class CdmsStore {
     }
 
     @observable list = null;
+    @observable lastCdmHash = null;
     @observable getListStatus = 'init';
     @observable sendCdmStatus = 'init';
     @observable groupHash = null;
@@ -29,7 +30,6 @@ class CdmsStore {
     initLevelDB() {
         const levelup = require('levelup');
         const leveljs = require('level-js');
-        console.log('init level db', this.groupHash);
         
         this.pendnigDB = levelup(leveljs(`/root/.leveldb/pending_cdms_${this.groupHash}`));
     }
@@ -84,7 +84,11 @@ class CdmsStore {
                                 }
                                 
                                 const groupHash = this.getGroupHash(members);
-                                this.groupHash = groupHash;
+                                if (groupHash !== this.groupHash) {
+                                    this.groupHash = groupHash;
+                                    this.getList();
+                                    throw 'Switching Group Hash';
+                                }
                             }
                             return list;
                         })
@@ -114,6 +118,10 @@ class CdmsStore {
                                 this.initCdms();
                                 return;
                             }
+
+                            if (list.length > 0 && list[0].type === 'incoming') {
+                                list[0].type = 'outgoing';
+                            }
                             
                             if (list.length > (this.list ? this.list.filter(el => el.type !== 'pending').length : 0)) {
                                 if (ifvisible.now('hidden')) {
@@ -123,24 +131,33 @@ class CdmsStore {
                             } else {
                                 this.list = this.list ? this.list : [];
                             }
-                            console.log('list', this.list.length, toJS(this.list));
-                            
+
                             if (this.list.length === 0) {
                                 chat.noResponse = false;
                             }
-                            if (this.list.length === 1) {
+                            if (
+                                this.list.length > 0 &&
+                                this.list.length === this.list.filter(el => ['outgoing', 'pending'].indexOf(el.type) > -1).length
+                            ) {
                                 const listEl = this.list[0];
-                                if (['outgoing', 'pending'].indexOf(listEl.type) > -1 && chat.timerFrom === null) {
+                                if (chat.timerFrom === null) {
                                     chat.timerFrom = listEl.timestamp;
                                     const now = Date.now() / 1000 | 0;
                                     const diff = now - chat.timerFrom;
                                     chat.noResponse = diff > chat.responseTimeout;                                 
                                 }
                             }
+
+                            if (this.list.filter(el => ['incoming'].indexOf(el.type) > -1).length > 0) {
+                                chat.noResponse = false;
+                                if (this.list[this.list.length - 1].message.toLowerCase() === 'консультация завершена') {
+                                    chat.clearChat();
+                                }
+                            }
                             this.getListStatus = 'success';
                         })
                         .catch(e => {
-                            console.log('CDM GetLIst Error:', e);
+                            console.log('err', e);
                             this.getListStatus = 'error';
                         })
                 })
