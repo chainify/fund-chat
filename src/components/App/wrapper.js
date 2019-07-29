@@ -19,7 +19,7 @@ export default class Wrapper extends Component {
             if (wrapper.isActive === true) {
                 alice.initAlice();
                 wrapper.targetElement = document.querySelector('body');
-                disableBodyScroll(wrapper.  );
+                disableBodyScroll(wrapper.targetElement);
             }
         });
     }

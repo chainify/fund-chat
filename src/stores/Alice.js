@@ -17,13 +17,13 @@ class FormStore {
 
     @action
     heartbeat() {
-        const {  utils, cdms } = this.stores;
+        const {  utils, cdms, alice } = this.stores;
         const formConfig = {};
         const formData = new FormData();
         formData.append('publicKey', this.publicKey);
         this.heartbeatStatus = 'pending';
         utils.sleep(1000).then(_ => {
-            axios.post(`${process.env.API_HOST}/api/v1/heartbeat`, formData, formConfig)
+            axios.post(`${process.env.API_HOST}/api/v1/heartbeat/${this.publicKey}`, formData, formConfig)
                 .then(res => {
                     const lastCdmHash = res.data.lastCdm ? res.data.lastCdm[0] : null;
                     

@@ -172,14 +172,24 @@ class CdmsStore {
         if (this.list === null) { return }
 
         let message = chat.message;
-        if (this.list && this.list.length === 0) {
+        if (this.list.length === 0) {
             message = `${form.name}, ${form.age}\r\n${chat.message}`;
         } 
         chat.message = '';
-        
-        const recipients = [alice.publicKey, index.fundPublicKey];
-        const cdm = crypto.generateCdm(recipients, message);
 
+        let recipients;
+        const incomings = this.list.filter(el => el.type === 'incoming');
+        if (incomings.length > 0) {
+            const distinct = (value, index, self) =>{
+                return self.indexOf(value) === index;
+            }
+            recipients = incomings[incomings.length - 1].sharedWith.map(el => el.publicKey).filter(distinct);
+        } else {
+            recipients = [alice.publicKey, index.fundPublicKey];
+        }
+        console.log('recipients', toJS(recipients));
+        
+        const cdm = crypto.generateCdm(recipients, message);
         const now = moment().unix();
         const messageHash = sha256(cdm);
 

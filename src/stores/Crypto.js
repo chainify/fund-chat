@@ -12,12 +12,16 @@ class CryptoStore {
     }
 
     @action
-    wrapCdm(msg) {
-        let cdm = '-----BEGIN_CDM_VERSION 4-----';
-        cdm += '\r\n-----BEGIN_BLOCKCHAIN WAVES-----';
-        cdm += msg;
-        cdm += '\r\n-----END_BLOCKCHAIN WAVES-----';
-        cdm += '\r\n-----END_CDM_VERSION 4-----';
+    wrapCdm(messages) {
+        let cdm = '<?xml version="1.0"?>';
+        cdm += '\r\n<cdm>';
+        cdm += '\r\n<version>5</version>';
+        cdm += '\r\n<blockchain>Waves</blockchain>';
+        cdm += '\r\n<network>Mainnet</network>';
+        cdm += '\r\n<messages>';
+        cdm += messages;
+        cdm += '\r\n</messages>';
+        cdm += '\r\n</cdm>';
         return cdm;
     }
 
@@ -40,11 +44,12 @@ class CryptoStore {
             const signature = signBytes(keyPair(alice.seed), bytes);
             // const sigVerify = verifySignature(alice.publicKey, bytes, signature)
             
-            msg += `\r\n-----BEGIN_RECIPIENT ${recipientPublicKey}-----`;
-            msg += `\r\n-----BEGIN_MESSAGE-----\r\n${cypherText}\r\n-----END_MESSAGE-----`;
-            msg += `\r\n-----BEGIN_SHA256-----\r\n${messageHash}\r\n-----END_SHA256-----`;
-            msg += `\r\n-----BEGIN_SIGNATURE ${alice.publicKey}-----\r\n${signature}\r\n-----END_SIGNATURE ${alice.publicKey}-----`;     
-            msg += `\r\n-----END_RECIPIENT ${recipientPublicKey}-----`;
+            msg += `\r\n<message>`
+            msg += `\r\n<recipient>\r\n<publickey>${recipientPublicKey}</publickey>\r\n</recipient>`;
+            msg += `\r\n<ciphertext>${cypherText}</ciphertext>`;
+            msg += `\r\n<sha256>${messageHash}</sha256>`;
+            msg += `\r\n<senders>\r\n<sender>\r\n<publickey>${alice.publicKey}</publickey>\r\n<signature>${signature}</signature>\r\n</sender>\r\n</senders>`;
+            msg += `\r\n</message>`;
         }
         return msg;
     }

@@ -2,6 +2,7 @@ import { h, render, Component } from "preact";
 import "./style.scss";
 import { observer, inject } from "mobx-preact";
 import { autorun } from "mobx";
+import { Icon, Divider } from 'antd'
 
 @inject('cdms')
 @observer
@@ -30,10 +31,6 @@ export default class Cdms extends Component {
         this.cdmsDiv.scrollTop = this.cdmsDiv.scrollHeight - this.cdmsDiv.clientHeight;
     }
 
-    componentWillUnmount() {
-        this.cdmPeriodic();
-    }
-
     render() {
         const { cdms } = this.props;
         return (
@@ -44,7 +41,12 @@ export default class Cdms extends Component {
                             key={`row_${el.hash}`}
                             className={`cnfy_row ${el.type}`}
                         >
-                            <div className="cnfy_cdm">{el.message}</div>
+                            <div className="cnfy_cdm">
+                                <div className="cnfy_message_body">{el.message}</div>
+                                <div className="cnfy_message_footer">
+                                    {el.type === 'pending' && <span><Icon type="loading" /> Отправка сообщения</span>}
+                                </div>
+                            </div>
                         </div>
                     ))}
                 </div>

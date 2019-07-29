@@ -2,7 +2,7 @@ import { h, render, Component } from "preact";
 import "./style.scss";
 import { observer, inject } from "mobx-preact";
 import { autorun } from 'mobx';
-import { Button, Input } from 'antd';
+import { Button, Input, Icon } from 'antd';
 import Cdms from './cdms';
 import mouseTrap from 'react-mousetrap';
 
@@ -158,9 +158,9 @@ class Chat extends Component {
                                             <Button
                                                 type="primary"
                                                 shape="round"
-                                                loading={
-                                                    cdms.list && cdms.list.filter(el => el.type === 'pending').length > 0
-                                                }
+                                                // loading={
+                                                //     cdms.list && cdms.list.filter(el => el.type === 'pending').length > 0
+                                                // }
                                                 disabled={
                                                     chat.message.trim() === ''
                                                 }
@@ -168,7 +168,9 @@ class Chat extends Component {
                                                     cdms.sendCdm();
                                                 }}
                                             >
-                                                Отпр.
+                                                {cdms.list && cdms.list.filter(el => el.type === 'pending').length > 0
+                                                    ? <span><Icon type="clock-circle" /> Отпр.</span>
+                                                    : 'Отпр.'}
                                             </Button>
                                         </div>
                                     </div>
